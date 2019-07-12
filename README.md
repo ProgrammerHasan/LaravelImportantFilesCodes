@@ -1,2 +1,2 @@
-# LaravelImportantFile
-All Laravel Important File or Project Code
+# laravel-important-files
+Some important functions and files for Laravel Projects
