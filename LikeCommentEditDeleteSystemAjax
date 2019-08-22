@@ -1,0 +1,428 @@
+<div class="tab-pane active" id="comments">
+  <!-- send comment -->
+  @auth
+  <div class="comment-send col-md-12 mb-5">
+  <div class="input-group comment-box-msx ms-b-r ms-b-s-sm">
+    <img src="{{ App\Helpers\ImageHelper::getUserProfileImage(Auth::user()->id) }}" title="{{Auth::user()->first_name}} {{Auth::user()->last_name}}" style="width: 30px;height: 30px;border-radius: 50px;border: 1px solid #0b0c0c9e;margin-top:6px;margin-left:2px;">
+     <textarea  class="form-control msx_emoji" id="comment-text" rows="1" placeholder="Hey! {{Auth::user()->first_name}} type your comment."></textarea>
+     <div class="input-group-append">
+        <button title="attach images/file" class="btn btn-  m-0 px-3 py-2 z-depth-0 waves-effect" id="w-search-btn" type="button" style="padding:0px 5px!important;">
+            <img src="{{asset('images/icon/attachment.svg')}}" width="22px;" class="search-icon-show">
+        </button>
+        <button title="Send your comment" onclick="send_comment();" class="btn btn- comment-send-btn m-0 px-3 py-2 z-depth-0 waves-effect" id="comment-sendbtn" type="button">
+            <img src="{{asset('images/icon/sendcom.svg')}}" width="22px;" class="search-icon-show">
+        </button>
+     </div>
+   </div>
+  </div>
+  @endauth
+<div class="comment-list">
+  @forelse($comments as $comment )
+  <div class="card gedf-card text-left mb-2 mt-1 ms-b-s-sm"style="margin-left:10px;margin-right:25px;">
+      <div class="card-header"style="padding:.2rem .25rem 0rem;">
+          <div class="d-flex justify-content-between align-items-left">
+              <div class="d-flex justify-content-between align-items-left">
+                  <div class="mr-2">
+                    <img src="{{ App\Helpers\ImageHelper::getUserProfileImage($comment->author_id) }}" class="comment_creator_pro">
+                  </div>
+                  <div class="ml-2">
+                      <a href="/{{$comment->users->user_name}}"><div class="h5 m-0">{{$comment->users->first_name}} {{$comment->users->last_name}}</div></a>
+                      <div class="h7 text-muted"style="font-size:12px;">{{$comment->users->profession}}</div>
+                  </div>
+              </div>
+              <div>
+                @if(Auth::check())
+                @if(Auth::user()->id == $comment->author_id)
+                  <div class="dropdown">
+                    <button class="btn btn-link dropdown-toggle" type="button" id="gedf-drop1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fa fa-ellipsis-h"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right ms-b-s-sm ms-b-r animated zoomIn" aria-labelledby="gedf-drop1">
+                        <a class="dropdown-item edit_this_comment" id="{{$comment->id}}" comment-val="{{$comment->comment}}" data-toggle="modal" data-target="#comment_edit_modal"><i class=""></i> Edit</a>
+                        <a class="dropdown-item delete_this_comment" id="{{$comment->id}}"><i class=""></i> Delete</a>
+                    </div>
+                  </div>
+                  @elseif(Auth::user()->id == $comment->user_id)
+                  <div class="dropdown">
+                    <button class="btn btn-link dropdown-toggle" type="button" id="gedf-drop1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fa fa-ellipsis-h"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right ms-b-s-sm ms-b-r animated zoomIn" aria-labelledby="gedf-drop1">
+                        <div class="h6 dropdown-header"></div>
+                        <a class="dropdown-item post_author_delete_this_comment" id="{{$comment->id}}" href="#"><i class=""></i> Delete</a>
+                    </div>
+                  </div>
+                  @endif
+                @endif
+              </div>
+          </div>
+      </div>
+      <div class="card-body">
+        <div class="text-muted h7 mb-1 comment-created_at ms-b-r ms-b-s-sm" title="{{$comment->created_at->diffForHumans()}}"> <i class="fa fa-clock-o"></i> {{$comment->created_at->diffForHumans()}}</div>
+        <p class="card-text">{{$comment->comment}}</p>
+      </div>
+      @auth
+      <div class="card-footer text-primary">
+          <a class="card-link comment_likeHover waves-effect comment_like ms-b-r comment_liked likeed{{$comment->id}}"  id="{{$comment->id}}"><i class="far fa-thumbs-up"></i> Like</a>
+          <a  class="card-link comment_likeHover waves-effect comment_unlike ms-b-r unlikeed{{$comment->id}}"  id="{{$comment->id}}"><i class="far fa-thumbs-down"></i> Unlike</a>
+      </div>
+      @auth
+      <div class="comment-send col-md-12 mb-1">
+      <div class="input-group comment-box-msx ms-b-r ms-b-s-sm ms-b-none">
+        <img src="{{ App\Helpers\ImageHelper::getUserProfileImage(Auth::user()->id) }}" class="recomment_creator_pro ms-b-r50" title="{{Auth::user()->first_name}} {{Auth::user()->last_name}}">
+         <input class="form-control ms-b-r15 msx_emoji" id="re-comment-text{{$comment->id}}" rows="1" placeholder="Reply...">
+         <div class="input-group-append">
+           <button title="attach images/file" class="btn btn-  m-0 px-3 py-2 z-depth-0 waves-effect" id="w-search-btn" type="button" style="padding:0px 5px!important;">
+               <img src="{{asset('images/icon/attachment.svg')}}" width="22px;" class="search-icon-show">
+           </button>
+           <button title="Send your comment" onclick="send_comment();" class="btn btn- comment-send-btn submit-recomment m-0 px-3 py-2 z-depth-0 waves-effect" id="{{$comment->id}}" type="button">
+               <img src="{{asset('images/icon/sends1.svg')}}" width="22px;" class="search-icon-show">
+           </button>
+         </div>
+       </div>
+      </div>
+      <!-- reply comments list-->
+      @php  $re_comments = App\Models\MsXpress\Comment::with('users')->where('reply_id',$comment->id)->where('comment_type','1')->orderBy('id','desc')->get(); @endphp
+      @if($re_comments->count() == '0')
+      @else
+      <!-- <div class="waves-effect ms-b-r15 "style="float: right;margin-left: 25px;cursor: pointer;width:fit-content;padding:0 15px;">
+        <i class="fa fa-chevron-up"></i>
+      </div> -->
+      @endif
+      @forelse($re_comments as $comment)
+      <div class="card gedf-card text-left mb-2 mt-1 ms-b-s-sm re-comments-ar ms-b-r15">
+          <div class="card-header d-flex justify-content-between align-items-left ms-p-none ms-bg-none ms-bb-sm">
+              <div class="d-flex justify-content-between align-items-left">
+                  <div class="mr-2">
+                    <img src="{{ App\Helpers\ImageHelper::getUserProfileImage($comment->author_id) }}" class="comment_creator_pro re_cpic">
+                  </div>
+                  <div class="ml-2 re_authxinfo"title="{{$comment->users->first_name}} {{$comment->users->last_name}}">
+                      <a href="/{{$comment->users->user_name}}">
+                        <div class="h7 m-0">{{$comment->users->first_name}} {{$comment->users->last_name}}</div>
+                      </a>
+                      <div class="h7 text-muted">{{$comment->users->profession}}</div>
+                  </div>
+              </div>
+              <div>
+                @if(Auth::check())
+                @if(Auth::user()->id == $comment->author_id)
+                  <div class="dropdown">
+                    <button class="btn btn-link dropdown-toggle ms-p-none" type="button" id="gedf-drop1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fa fa-ellipsis-h"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right ms-b-s-sm ms-b-r animated zoomIn" aria-labelledby="gedf-drop1">
+                        <a class="dropdown-item re_comment_edit" id="{{$comment->id}}" comment-val="{{$comment->comment}}" data-toggle="modal" data-target="#comment_edit_modal"><i class=""></i> Edit</a>
+                        <a class="dropdown-item re_comment_delete" id="{{$comment->id}}" href="#"><i class=""></i> Delete</a>
+                    </div>
+                  </div>
+                  @elseif(Auth::user()->id == $comment->user_id)
+                  <div class="dropdown">
+                    <button class="btn btn-link dropdown-toggle" type="button" id="gedf-drop1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fa fa-ellipsis-h"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right ms-b-s-sm ms-b-r animated zoomIn" aria-labelledby="gedf-drop1">
+                        <div class="h6 dropdown-header"></div>
+                        <a class="dropdown-item post_author_re_comment_delete" id="{{$comment->id}}"><i class=""></i> Delete</a>
+                    </div>
+                  </div>
+                  @endif
+                @endif
+              </div>
+          </div>
+          <div class="card-body">
+            <div class="text-muted h7 mb-1 comment-created_at ms-b-r ms-b-s-sm" title="{{$comment->created_at->diffForHumans()}}"> <i class="fa fa-clock-o"></i> {{$comment->created_at->diffForHumans()}}</div>
+            <p class="card-text ms-b-r15">{{$comment->comment}}</p>
+          </div>
+          @auth
+          <div class="ms-bb-sm card-footer ms-p-none ms-bg-none">
+              <a href="#" class="card-link"><i class="far fa-thumbs-up"></i> Like</a>
+          </div>
+          @endauth
+      </div>
+      @empty
+      @endforelse
+
+      @endauth
+      @endauth
+  </div>
+  @empty
+  <center>
+    <h4 class="not_available ms-b-r">No Comment Available:)</h4>
+  </center>
+  @endforelse
+  <!-- edit comment -->
+  <div class="modal animated ms_modal_over  fade" id="comment_edit_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+    aria-hidden="true"data-backdrop="false"style="border-radius:15px;">
+    <div class="modal-dialog zoomIn modal-notify modal-info ms-b-r" role="document"style="top:150px;">
+      <!--Content-->
+      <div class="modal-content fadeIn animated ms-b-r15"style="border:3px solid #33b5e6">
+        <!--Header-->
+        <div class="modal-header aqua-gradient"style="height:25px;border-top-left-radius: 10px;border-top-right-radius:10px;border-bottom:3px solid #5555553d;">
+          <p class="heading lead text-white"style="margin-top: -20px;font-size: 20px;"> Edit Your Comment:)<i class="text-white fa fa-edit"></i> </p>
+          <button type="button" class="close " data-dismiss="modal" aria-label="Close"style="color:red!important;width: 25px;border-top-right-radius: 8px;height: 32px;padding: 0;">
+            <span aria-hidden="true" class="white-text">&times;</span>
+          </button>
+        </div>
+        <!--Body-->
+        <div class="modal-body text-center">
+            <input type="text" value="" class="form-control msx_comment_val">
+        <!--Footer--><br>
+          <button class="btn aqua-gradient waves-effect btn-sm text-center edit_comments"style="font-weight: 900;"><i class="fa fa-edit"></i> Update !</button>
+      </div>
+      <!--/.Content-->
+    </div>
+  </div>
+  </div>
+</div>
+</div>
+
+<script type="text/javascript">
+
+// Commment Functions
+function get_comments(){
+ var this_post_id = $('.this_post_id').val();
+ $.ajax({
+   headers:{'X-CSRF-TOKEN':$('meta[name="csrf-token"]').attr('content')},
+   type:"GET",
+   url:"/comments/show",
+   data:{this_post_id:this_post_id},
+   success:function(resp)
+   {
+     $('#count_comment').text(resp);
+   },error:function(){
+     alert('error');
+   }
+ })
+}
+function send_comment(){
+ var comment = $('#comment-text').val();
+ var comment_type = '0';
+ if(comment == '')
+ {
+   $('#comment-text').focus();
+ }else {
+   var spinnertext = '...';
+   var submitbtn = 'comment-sendbtn';
+   var spinnerclass = '.submit-spinner-comment';
+   var addblurclass ='.comment-box-msxd';
+   var spinnertextclass = '.spinner-text1';
+   MsLoadingSpinner(spinnerclass,spinnertextclass,spinnertext,submitbtn,addblurclass);
+ var this_post_id = $('.this_post_id').val();
+ var this_post_author = $('.this_post_author').val();
+ $.ajax({
+   headers:{'X-CSRF-TOKEN':$('meta[name="csrf-token"]').attr('content')},
+   type:"POST",
+   url:"/comments",
+   data:{comment:comment,this_post_id:this_post_id,this_post_author:this_post_author,comment_type:comment_type},
+   success:function(resp)
+   {
+     get_comments();
+     setTimeout(function(){
+       var n_msg = 'Comment Added Success';
+       Ms_NSuccessAlert(n_msg);
+       $('#comment-text').val('');
+       location.reload();
+       var spinnertext = '..!';
+       MsLoadingSpinnerRemove(spinnerclass,spinnertextclass,spinnertext,submitbtn,addblurclass);
+    },1000);
+   },error:function(){
+     alert("error");
+   }
+ });
+}
+}
+
+// add sub com
+$(document).on('click','.submit-recomment', function(){
+  var comment_id = $(this).attr("id");
+  var recomment_text = $('#re-comment-text'+comment_id).val();
+  if(recomment_text == '')
+  {
+    $('#re-comment-text'+comment_id).focus();
+  }else{
+    var this_post_id = $('.this_post_id').val();
+    var this_post_author = $('.this_post_author').val();
+     var comment_type = '1';
+    $.ajax({
+      headers:{'X-CSRF-TOKEN':$('meta[name="csrf-token"]').attr('content')},
+      type:"POST",
+      url:"/comments",
+      data:{comment_type:comment_type,this_post_id:this_post_id,this_post_author:this_post_author,recomment_text:recomment_text,comment_id:comment_id},
+      success:function(resp)
+      {
+        var n_msg = 'Reply Send Success';
+        Ms_NSuccessAlert(n_msg);
+        $('#re-comment-text'+comment_id).val('');
+        location.reload();
+      },error:function(){
+        alert("error");
+      }
+    });
+
+  }
+});
+get_likesCounts();
+// like love sad unlike sy
+function get_likesCounts(){
+ var this_post_id = $('.this_post_id').val();
+ $.ajax({
+   url:"/likes/show",
+   method:'GET',
+   data:{this_post_id:this_post_id},
+   dataType:'json',
+   success:function(data)
+   {
+     $('.like_count').html(data.total_like);
+     $('.unlike_count').html(data.total_unlike);
+     $('.love_count').html(data.total_love);
+     $('.sad_count').html(data.total_sad);
+   },error:function(){
+     alert('error');
+   }
+ })
+}
+// like love sad
+var comment_id="";
+function get_like(like_status,like_type)
+{
+  var this_post_id = $('.this_post_id').val();
+  var this_post_author = $('.this_post_author').val();
+  $.ajax({
+    headers:{'X-CSRF-TOKEN':$('meta[name="csrf-token"]').attr('content')},
+    type:"POST",
+    url:"/likes",
+    data:{like_status:like_status,this_post_id:this_post_id,this_post_author:this_post_author,like_type:like_type,comment_id:comment_id},
+    success:function(resp)
+    {
+      get_likesCounts();
+    },error:function(){
+      alert("error:) please check code!");
+    }
+  });
+}
+function g_like(){
+  var like_status = '1';
+  var like_type = '1';
+  get_like(like_status,like_type);
+}
+function g_unlike(){
+  var like_status = '0';
+  var like_type = '1';
+  get_like(like_status,like_type);
+}
+function g_love(){
+  var like_status = '3';
+  var like_type = '1';
+  get_like(like_status,like_type);
+}
+function g_sad(){
+  var like_status = '4';
+  var like_type = '1';
+  get_like(like_status,like_type);
+}
+
+// comment like unlike
+$('.comment_like').click(function(){
+  var like_status = '1';
+  var like_type = 'comment';
+  comment_id = $(this).attr("id");
+  get_like(like_status,like_type);
+  $(this).addClass('comment_liked');
+  $('.unlikeed'+comment_id).removeClass('comment_liked');
+});
+$('.comment_unlike').click(function(){
+  var like_status = '0';
+  var like_type = 'comment';
+  comment_id = $(this).attr("id");
+  get_like(like_status,like_type);
+  $(this).addClass('comment_liked');
+  $('.likeed'+comment_id).removeClass('comment_liked');
+});
+
+// delete comment
+var comment_id='';
+$('.re_comment_delete').click(function(){
+    comment_id = $(this).attr("id");
+    delete_comment(comment_id);
+});
+$('.delete_this_comment').click(function(){
+  comment_id = $(this).attr("id");
+  delete_comment(comment_id);
+});
+$('.post_author_re_comment_delete').click(function(){
+    comment_id = $(this).attr("id");
+    delete_comment(comment_id);
+});
+$('.post_author_delete_this_comment').click(function(){
+  comment_id = $(this).attr("id");
+  delete_comment(comment_id);
+});
+function delete_comment(comment_id){
+  Swal.fire({
+    title: 'Are you sure?',
+    text: "You won't be able to revert this!",
+    type: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, Delete it!'
+  }).then((result) => {
+    if (result.value) {
+      event.preventDefault();
+      Swal.fire(
+        'Deleted!',
+        'Your Comment has been deleted.',
+        'success'
+      )
+      $.ajax({
+        headers:{'X-CSRF-TOKEN':$('meta[name="csrf-token"]').attr('content')},
+        type:"DELETE",
+        url:"/comments/destroy",
+        data:{comment_id:comment_id},
+        success:function(resp)
+        {
+          var n_msg = 'Comment Deleted Success';
+          Ms_NSuccessAlert(n_msg);
+          location.reload();
+        },error:function(){
+          alert("error");
+        }
+      });
+    }
+  })
+}
+
+// edit comment
+$('.re_comment_edit').click(function(){
+    comment_id = $(this).attr("id");
+    var comment = $(this).attr("comment-val");
+    $('.msx_comment_val').val(comment);
+});
+$('.edit_this_comment').click(function(){
+  comment_id = $(this).attr("id");
+  var comment = $(this).attr("comment-val");
+  $('.msx_comment_val').val(comment);
+});
+$('.edit_comments').click(function(){
+    var comment_edit = $('.msx_comment_val').val();
+    edit_comment(comment_edit);
+});
+
+function edit_comment(comment_edit)
+{
+  $.ajax({
+    headers:{'X-CSRF-TOKEN':$('meta[name="csrf-token"]').attr('content')},
+    type:"GET",
+    url:"/comments/edit",
+    data:{comment_id:comment_id,comment_edit:comment_edit},
+    success:function(resp)
+    {
+      var n_msg = 'Comment Edit Success';
+      Ms_NSuccessAlert(n_msg);
+      location.reload();
+    },error:function(){
+      alert("error");
+    }
+  });
+}
+</script>
