@@ -1,0 +1,19 @@
+    private function generate_app_code($application_id) {
+        $token = $this->getToken(6, $application_id);
+        $code = 'EN'. $token . substr(strftime("%Y", time()),2);
+
+        return $code;
+    }
+
+    private function getToken($length, $seed){
+        $token = "";
+        $codeAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        $codeAlphabet.= "0123456789";
+
+        mt_srand($seed);      // Call once. Good since $application_id is unique.
+
+        for($i=0;$i<$length;$i++){
+            $token .= $codeAlphabet[mt_rand(0,strlen($codeAlphabet)-1)];
+        }
+        return $token;
+    }
