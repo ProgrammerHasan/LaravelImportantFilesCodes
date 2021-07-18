@@ -1,3 +1,3 @@
-//larave where with commna implode value
+//Laravel where with comma implode value
 $products = Product::whereRaw("find_in_set('".$request->subcategory_id."',cats)")->get();
 return $products;
