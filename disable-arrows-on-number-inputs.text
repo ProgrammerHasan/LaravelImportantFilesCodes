@@ -1,0 +1,34 @@
+  <style>
+        /* Chrome, Safari, Edge, Opera */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* Firefox */
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+
+
+
+    <script>
+            $('form').on('focus', 'input[type=number]', function(e) {
+                $(this).on('wheel', function(e) {
+                    e.preventDefault();
+                })
+            });
+
+            // Restore scroll on number inputs.
+            $('form').on('blur', 'input[type=number]', function(e) {
+                $(this).off('wheel')
+            });
+
+            // Disable up and down keys.
+            $('form').on('keydown', 'input[type=number]', function(e) {
+                if ( e.which == 38 || e.which == 40 )
+                    e.preventDefault();
+            })
+    </script>
